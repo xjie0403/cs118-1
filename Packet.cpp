@@ -29,6 +29,8 @@ Packet::Packet(char* buffer) {
 }
 
 bool Packet::to_buffer(char* buffer) {
+	checksum = calc_checksum();
+
 	memset(buffer, 0, BUFFSIZE);
 	memcpy(buffer, &SEQ, sizeof(int));
 	memcpy(buffer + sizeof(int), &ACK, sizeof(int));
@@ -55,15 +57,36 @@ bool Packet::to_buffer(char* buffer) {
 }
 
 bool Packet::is_valid() {
-	//TODO 
-	return true;
+	int crc = calc_checksum();
+
+	if (crc == checksum)
+		return true;
+	else
+		return false;
 }
 
 bool Packet::is_content_full() {
 	int startByte = 3 * sizeof(int) + 2 * sizeof(bool);
-	
+
 	if (content.size() >= BUFFSIZE - startByte)
 		return true;
 	else
 		return false;
+}
+
+int Packet::calc_checksum() {
+	int crc = 0;
+	for (int i = 0; i < content.size(); i++) {
+		crc = crc ^ (unsigned short)content[i] << 8;
+		
+		int j = 8;
+		do {
+			if (crc & 0x8000)
+				crc = crc << 1 ^ 0x1021;
+			else
+				crc = crc << 1;
+		} while (--j);
+	}
+
+	return crc;
 }
