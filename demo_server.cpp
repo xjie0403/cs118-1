@@ -24,9 +24,9 @@ int main() {
 		obj.rtp_accept(filename);
 		cout << "Filename: " << filename << endl;
 
-		string str = "";
-		for (int i = 0; i < 1000; i++)
-			str = str + "test";
+		string str = "test";
+		//for (int i = 0; i < 100; i++)
+		//	str = str + "test";
 
 		cout << obj.rtp_send(str) << endl;
 		cout << "Done" << endl;

@@ -17,8 +17,9 @@
 
 using namespace std;
 
-#define CFG_TIMEOUT 2
-#define CFG_WINDOWSIZE 100
+#define CFG_TIMEOUT 1
+#define CFG_LASTWAIT 3
+#define CFG_WINDOWSIZE 10
 
 class Protocol {
 public:
@@ -35,16 +36,17 @@ public:
 
 private:
 	int fd;
+	int mode;
 	int ourSEQ, itsSEQ;
 	struct sockaddr_in dstAddr;
 	socklen_t dstLen;
 	
 	vector<Packet> sndpkt;
 	int sndpktPtr;
+	time_t timer;
 
 	bool add_and_send(Packet pkt);
 	bool take_care_send();
-	time_t timer;
 };
 
 #endif

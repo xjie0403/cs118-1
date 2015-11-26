@@ -6,6 +6,7 @@ Protocol::Protocol() {
 	sndpkt.clear();
 	sndpktPtr = 0;
 	timer = 0;
+	mode = 0;
 
 	dstLen = sizeof(dstAddr);
 }
@@ -18,16 +19,16 @@ bool Protocol::set_server(int port) {
 	}
 
 	struct sockaddr_in sockAddr;
-	//memset(&sockAddr, 0, sizeof(sockaddr_in));
 	sockAddr.sin_family = AF_INET;
 	sockAddr.sin_port = htons(port);
 	sockAddr.sin_addr.s_addr = htonl(INADDR_ANY);
-	//memset(&(sockAddr.sin_zero), 0, 8);
 
 	if (bind(fd, (struct sockaddr*)&sockAddr, sizeof(sockAddr)) == -1) {
-		cerr << "Binding failed" << endl;
+		cerr << "set_server: binding failed" << endl;
 		return false;
 	}
+
+	mode = 1;
 
 	return true;
 }
@@ -64,10 +65,17 @@ bool Protocol::set_client(string hostname, int port) {
 		return false;
 	}
 
+	mode = 2;
+
 	return true;
 }
 
 bool Protocol::rtp_connect(string filename) {
+	if (mode != 2) {
+		cerr << "Illegal interface call: not under client mode" << endl;
+		return false;
+	}
+
 	Packet synPkt;
 	synPkt.SYN = true;
 	synPkt.content = filename;
@@ -87,6 +95,11 @@ bool Protocol::rtp_connect(string filename) {
 }
 
 void Protocol::rtp_accept(string &filename) {
+	if (mode != 1) {
+		cerr << "Illegal interface call: not under server mode" << endl;
+		return;
+	}
+
 	char buffer[BUFFSIZE];
 
 	while (1) {
@@ -123,6 +136,11 @@ void Protocol::rtp_accept(string &filename) {
 }
 
 bool Protocol::rtp_read(string &returnMessage) {
+	if (mode != 2) {
+		cerr << "Illegal interface call: not under client mode" << endl;
+		return false;
+	}
+
 	returnMessage = "";
 
 	time(&timer);
@@ -211,7 +229,31 @@ bool Protocol::rtp_read(string &returnMessage) {
  				continue;
  			}
 
- 			// WAIT 30 seconds
+ 			// Last Wait
+ 			cerr << "Enter " << CFG_LASTWAIT << "-seconds Waiting Phase" << endl;
+ 			time(&timer);
+ 			while (time(NULL) < timer + CFG_LASTWAIT) {
+ 				if (recvfrom(fd, buffer, sizeof(buffer), MSG_DONTWAIT, NULL, NULL) < 0) {
+					continue;
+				}
+
+				Packet newPacket(buffer);
+				if (!newPacket.is_valid()) {
+					cerr << "Received a corrupted packet" << endl;
+					continue;
+				}
+
+				if (newPacket.FIN) {
+					ack.to_buffer(buffer);
+
+					cerr << "Re-send last ACK packet" << endl;
+
+ 					if (sendto(fd, buffer, sizeof(buffer), 0, (struct sockaddr *)&dstAddr, sizeof(dstAddr)) < 0) {
+ 						cerr << "ACK of FIN failed" << endl;
+ 						continue;
+ 					}
+				}
+ 			}
 
  			return true;
  		}
@@ -231,6 +273,11 @@ bool Protocol::rtp_read(string &returnMessage) {
 }
 
 bool Protocol::rtp_send(string sendMessage) {
+	if (mode != 1) {
+		cerr << "Illegal interface call: not under server mode" << endl;
+		return false;
+	}
+
 	Packet pkt;
 
 	for (int i = 0; i <= sendMessage.size(); i++) {
@@ -254,6 +301,10 @@ bool Protocol::rtp_send(string sendMessage) {
 }
 
 bool Protocol::add_and_send(Packet pkt) {
+	while (sndpkt.size() - sndpktPtr >= CFG_WINDOWSIZE) {
+		take_care_send();
+	}
+
 	pkt.SEQ = ourSEQ++;
 	sndpkt.push_back(pkt);
 
@@ -275,8 +326,8 @@ bool Protocol::add_and_send(Packet pkt) {
 
 /**
  @return:
- 	true: all sender pkts ACKed
- 	false: 
+ 	true: all sender packets ACKed
+ 	false: exists some packets timeout
 */
 bool Protocol::take_care_send() {
 	if (sndpktPtr >= sndpkt.size())
@@ -285,8 +336,10 @@ bool Protocol::take_care_send() {
 	char buffer[BUFFSIZE];
 	do {
 		// loop and wait
-		if (sndpktPtr == sndpkt.size())
+		if (sndpktPtr == sndpkt.size()) {
+			timer = 0;
 			return true;
+		}
 
 		if (recvfrom(fd, buffer, sizeof(buffer), MSG_DONTWAIT, (struct sockaddr*)&dstAddr, &dstLen) < 0) {
 			continue;
@@ -303,8 +356,7 @@ bool Protocol::take_care_send() {
 			// ACK successfully
 			sndpktPtr++;
 		} else {
-			// out of order ACK
-			// drop
+			// out of order ACK, drop
 			continue;
 		}
 		
@@ -314,7 +366,7 @@ bool Protocol::take_care_send() {
 		return true;
 
 	// timeout, re-send all packets in the sndpkt
-	cerr << "timeout, re-send all packets" << " " << sndpktPtr << " " << sndpkt.size() << endl;
+	cerr << "Sender timeout! Re-send all packets" << " " << sndpktPtr << " " << sndpkt.size() << endl;
 
 	time(&timer);
 	for (int i = sndpktPtr; i < sndpkt.size(); i++) {
