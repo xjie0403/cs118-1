@@ -34,10 +34,14 @@ public:
 	bool rtp_read(string &returnMessage);
 	bool rtp_send(string sendMessage);
 
+	void set_Pl(float Pl);
+	void set_Pc(float Pc);
+
 private:
 	int fd;
 	int mode;
 	int ourSEQ, itsSEQ;
+	float Pl, Pc;
 	struct sockaddr_in dstAddr;
 	socklen_t dstLen;
 	
@@ -47,6 +51,7 @@ private:
 
 	bool add_and_send(Packet pkt);
 	bool take_care_send();
+	bool under_possibility(float possibility);
 };
 
 #endif

@@ -23,6 +23,7 @@ public:
 	bool is_valid();
 	bool is_content_full();
 	bool to_buffer(char* buffer);
+	void corrupt_buffer(char* buffer);
 
 private:
 	int calc_checksum();

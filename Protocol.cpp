@@ -8,6 +8,8 @@ Protocol::Protocol() {
 	timer = 0;
 	mode = 0;
 
+	Pl = Pc = 0;
+
 	dstLen = sizeof(dstAddr);
 }
 
@@ -149,7 +151,7 @@ bool Protocol::rtp_read(string &returnMessage) {
 	bool isSYN = false;
 
 	// wait for first SYN
-	while (time(NULL) <= timer + CFG_TIMEOUT) {
+	while (time(NULL) <= timer + 3 * CFG_TIMEOUT) {
 		if (recvfrom(fd, buffer, sizeof(buffer), MSG_DONTWAIT, NULL, NULL) < 0) {
 			continue;
 		}
@@ -316,6 +318,14 @@ bool Protocol::add_and_send(Packet pkt) {
 
 	pkt.to_buffer(buffer);
 
+	// Under possiblity Pc to corrupt packet
+	if (under_possibility(Pc))
+		pkt.corrupt_buffer(buffer);
+
+	// Under possiblity Pl to lose packet
+	if (under_possibility(Pl))
+		return true;
+
 	if (sendto(fd, buffer, BUFFSIZE, 0, (struct sockaddr *)&dstAddr, sizeof(dstAddr)) < 0) {
 		cerr << "send packet error: add_and_send()" << endl;
 		return false;
@@ -372,6 +382,14 @@ bool Protocol::take_care_send() {
 	for (int i = sndpktPtr; i < sndpkt.size(); i++) {
 		sndpkt[i].to_buffer(buffer);
 
+		// Under possiblity Pc to corrupt packet
+		if (under_possibility(Pc))
+			sndpkt[i].corrupt_buffer(buffer);
+
+		// Under possiblity Pl to lose packet
+		if (under_possibility(Pl))
+			continue;
+
 		if (sendto(fd, buffer, sizeof(buffer), 0, (struct sockaddr *)&dstAddr, sizeof(dstAddr)) < 0) {
 			cerr << "re-send packer error: take_care_send()" << endl;
 			return false;
@@ -379,4 +397,21 @@ bool Protocol::take_care_send() {
 	}
 
 	return false;
+}
+
+void Protocol::set_Pl(float Pl) {
+	this->Pl = Pl;
+}
+
+void Protocol::set_Pc(float Pc) {
+	this->Pc = Pc;
+}
+
+bool Protocol::under_possibility(float possibility) {
+	possibility = 100 - possibility * 100;
+
+	if (rand() % 100 >= possibility)
+		return true;
+	else
+		return false;
 }

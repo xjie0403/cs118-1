@@ -17,6 +17,9 @@ using namespace std;
 int main() {
 	Protocol obj;
 
+	obj.set_Pl(0.2);
+	obj.set_Pc(0.2);
+
 	cout << obj.set_server(23333) << endl;
 
 	while (1) {
@@ -24,9 +27,9 @@ int main() {
 		obj.rtp_accept(filename);
 		cout << "Filename: " << filename << endl;
 
-		string str = "test";
-		//for (int i = 0; i < 100; i++)
-		//	str = str + "test";
+		string str = "";
+		for (int i = 0; i < 1000; i++)
+			str = str + "test";
 
 		cout << obj.rtp_send(str) << endl;
 		cout << "Done" << endl;

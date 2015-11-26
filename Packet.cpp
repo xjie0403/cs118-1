@@ -56,6 +56,12 @@ bool Packet::to_buffer(char* buffer) {
 	return true;
 }
 
+void Packet::corrupt_buffer(char* buffer) {
+	int startByte = 3 * sizeof(int) + 2 * sizeof(bool);
+	int rnd = rand() % 256;
+	memcpy(buffer + startByte, &rnd, sizeof(int));
+}
+
 bool Packet::is_valid() {
 	int crc = calc_checksum();
 
