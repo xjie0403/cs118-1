@@ -17,45 +17,41 @@
 using namespace std;
 
 
-int main()
+int main(int argc,char* argv[])
 {
 	Protocol obj;
-	string command;
-	string str[4];
+	
+	cout<<argc<<endl;
+	for (int n=0; n<6;n++)
+		{
+			cout<<argv[n]<<endl;
+		}
+	if (argc!=6)
+	{	
+		cout<<"Wrong format!"<<endl;
+		return -1;
+	}
+
+	
 	string hostname;
 	int port;
 	string filename;
 	
-	int i = 0;
-	cout<<"Please input receiver command"<<endl;
-	cin>>command;
-	istringstream iss(command);
-	while(!istr.eof())
-	{
-		if (i>3)
-		{
-			cout<<"wrong command format"<<endl;
-			return 0;
-		}
-		istr>>str[i];
-		cout<<str[i]<<endl;
-		i++;
-	}
-	if (str[0]!="receiver")
-		{
-			cout<<"please input the right comand"<<endl;
-			return 0;
-		}
-	hostname = str[1];
-	port= atoi(str[2].c_str());
-	filename = str[3];
+	hostname = argv[1];
+	port = atoi(argv[2]);
+	filename = argv[3];
+	string pl=argv[4];
+	string pc=argv[5];
+	//obj.set_Pl(atof(pl.c_str()));
+	//obj.set_Pc(atof(pc.c_str()));
 	
 	cout<<obj.set_client(hostname,port)<<endl;
 	
+	
 	//cout<<obj.set_client("127.0.0.1", 23333) << endl
-	//	obj.rtp_connect("gan.cpp");
-	//string message = "";
-	//cout << obj.rtp_read(message) << endl;
+		cout<<obj.rtp_connect(filename)<<endl;
+	string message;
+	cout << obj.rtp_read(message) << endl;
 	//cout << message << endl;
 	
 	return 0;
