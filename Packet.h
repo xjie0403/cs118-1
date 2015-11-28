@@ -14,7 +14,7 @@ class Packet {
 public:
 	int SEQ, ACK;
 	bool SYN, FIN;
-	int checksum;
+	int checksum, length;
 	string content;
 
 	Packet();
