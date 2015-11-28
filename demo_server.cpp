@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
 	//cout<<pl<<' '<<pc<<endl;
 	obj.set_Pl(atof(pl.c_str()));
 	obj.set_Pc(atof(pc.c_str()));
-	
+	obj.set_window_size(CW);
 	cout<<obj.set_server(port)<<endl; 
 	
 	//cout<<"jinlaile wa?"<<endl;
