@@ -7,6 +7,7 @@ Protocol::Protocol() {
 	sndpktPtr = 0;
 	timer = 0;
 	mode = 0;
+	windowsSize = 10;
 
 	Pl = Pc = 0;
 
@@ -405,6 +406,10 @@ void Protocol::set_Pl(float Pl) {
 
 void Protocol::set_Pc(float Pc) {
 	this->Pc = Pc;
+}
+
+void Protocol::set_window_size(int windowsSize) {
+	this->windowsSize = windowsSize;
 }
 
 bool Protocol::under_possibility(float possibility) {

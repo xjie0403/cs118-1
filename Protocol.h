@@ -19,7 +19,7 @@ using namespace std;
 
 #define CFG_TIMEOUT 1
 #define CFG_LASTWAIT 3
-#define CFG_WINDOWSIZE 10
+#define CFG_WINDOWSIZE this->windowsSize
 
 class Protocol {
 public:
@@ -36,11 +36,13 @@ public:
 
 	void set_Pl(float Pl);
 	void set_Pc(float Pc);
+	void set_window_size(int windowsSize);
 
 private:
 	int fd;
 	int mode;
 	int ourSEQ, itsSEQ;
+	int windowsSize;
 	float Pl, Pc;
 	struct sockaddr_in dstAddr;
 	socklen_t dstLen;
