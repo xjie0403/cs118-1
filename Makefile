@@ -1,7 +1,7 @@
-all: server client
+all: sender receiver
 	
-server: demo_server.cpp Protocol.cpp Protocol.h Packet.cpp Packet.h
-	g++ -o $@ demo_server.cpp Protocol.cpp Packet.cpp
+sender: sender.cpp Protocol.cpp Protocol.h Packet.cpp Packet.h
+	g++ -o $@ sender.cpp Protocol.cpp Packet.cpp
 
-client: demo_client.cpp Protocol.cpp Protocol.h Packet.cpp Packet.h
-	g++ -o $@ demo_client.cpp Protocol.cpp Packet.cpp
+receiver: receiver.cpp Protocol.cpp Protocol.h Packet.cpp Packet.h
+	g++ -o $@ receiver.cpp Protocol.cpp Packet.cpp
